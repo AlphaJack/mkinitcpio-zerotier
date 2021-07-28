@@ -1,0 +1,65 @@
+#!/bin/bash
+
+run_hook(){
+ # print commands before executing them
+ set -o xtrace
+
+ # read variables
+ # source new ones if they are added via package updates (.pacnew file)
+ echo "[INFO] Reading ZeroTier One configuration"
+ ZEROTIER_CONF="/var/lib/zerotier-one/initcpio/config.ini"
+ if [ -r "$ZEROTIER_CONF.pacnew" ]; then
+  source "$ZEROTIER_CONF.pacnew"
+ fi
+ # override default values with custom ones if they are set
+ source "$ZEROTIER_CONF"
+
+ # initialize the interface running as a daemon
+ # wait some time to have the interface initialized, otherwise zerotier-cli will fail
+ echo "[INFO] Initializing ZeroTier One interface"
+ zerotier-one -d "$ZEROTIER_HOME"
+ sleep "$ZEROTIER_WAIT"
+ if [ ! -f "$ZEROTIER_HOME/zerotier-one.port" ]; then
+  echo "[WAIT] Giving ZeroTier One some more time"
+  sleep "$ZEROTIER_WAIT"
+ fi
+
+ if [ -f "$ZEROTIER_HOME/zerotier-one.port" ]; then
+  # show the interface status
+  # do not put space between "-D" and its argument
+  zerotier-cli -D$ZEROTIER_HOME status
+
+  # join network
+  echo "[INFO] Joining ZeroTier One network"
+  zerotier-cli -D"$ZEROTIER_HOME" join "$ZEROTIER_NETWORK"
+ else
+  echo "[ERROR] Could not connect because interface is still offline"
+ fi
+
+ # optional debug commands
+ if [ "$ZEROTIER_DEBUG" = true ]; then
+  # wait some time to connect to the network
+  sleep "$ZEROTIER_WAIT"
+  # available networks
+  ip route
+  # available interfaces and ip addresses
+  ip address
+  # external server
+  ping 1.1.1.1 -c 5
+  # vpn peer
+  ping "$ZEROTIER_PEER" -c 5
+  # open ports (ssh will be opened later by another hook)
+  netstat -tulpn
+  # wait some time to read the above commands output
+  sleep "$ZEROTIER_WAIT"
+ fi
+
+ # stop printing commands before executing them
+ set +o xtrace
+}
+
+run_cleanuphook(){
+ # leave the network and stop the process
+ zerotier-cli -D"$ZEROTIER_HOME" leave "$ZEROTIER_NETWORK"
+ killall zerotier-one
+}

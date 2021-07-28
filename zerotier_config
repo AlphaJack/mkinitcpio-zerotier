@@ -1,0 +1,22 @@
+# Variables for the ZeroTier One initcpio hook
+
+# This folder should contain your private identity file,
+# otherwise it will be generated automatically the first time
+ZEROTIER_HOME="/var/lib/zerotier-one/initcpio"
+
+# The name of your ZeroTier One network. If you don't have one,
+# you can create it from https://my.zerotier.com/
+ZEROTIER_NETWORK="xxxxxxxxxxxxxxxx"
+
+# The number of seconds you want to wait for ZeroTier One to set up
+# the interface before attempting a connection to the network
+ZEROTIER_WAIT=10
+
+# Run useful commands to debug connectivity problems
+# possible values are "true" or "false" (case sensitive)
+ZEROTIER_DEBUG=false
+
+# The IP address of a device already connected to your ZeroTier One network,
+# used to test connectivity with ping after the interface
+# has been initialized, if ZEROTIER_DEBUG is set to true
+ZEROTIER_PEER="10.0.0.1"
